@@ -1,0 +1,5 @@
+parameter,value,source
+indonesia_default_base,8.25,IISD 2026 Table 5 (from IR 2025/2621) for CN 7210
+benchmark_bf_bof,1.491,IISD 2026 section 4.3 worked example for CN 7210 (IR 2025/2620 Annex)
+benchmark_scrap_eaf,0.1118,Implied by IISD 2026 Table 2 (SEFA 0.109 / 0.975) - verify against IR 2025/2620 Annex
+verified_see_scrap_eaf,0.62,IISD 2026 Table 2 illustrative scrap-EAF example (Vietnam) - not an Indonesian mill

@@ -1,26 +1,35 @@
 import matplotlib.pyplot as plt
 
-from calculator import cbam_cost_for_year, load_phase_in
+from calculator import default_see, load_parameters, load_schedule, shipment_cost
 
-# Illustrative inputs, to be replaced with sourced values later
 TONNES = 1000
-EU_PRICE = 82              # EUR per tCO2
-DEFAULT_EMISSIONS = 10.7   # tCO2 per tonne of steel (EU default, illustrative)
-VERIFIED_EMISSIONS = 0.5   # tCO2 per tonne of steel (verified, illustrative)
+EU_PRICE = 82  # EUR per tCO2, assumed
 
-years = sorted(load_phase_in())
-default_costs = [cbam_cost_for_year(TONNES, DEFAULT_EMISSIONS, y, EU_PRICE) / 1000 for y in years]
-verified_costs = [cbam_cost_for_year(TONNES, VERIFIED_EMISSIONS, y, EU_PRICE) / 1000 for y in years]
+p = load_parameters()
+years = [int(y) for y in load_schedule().index]
+default_costs = [
+    shipment_cost(TONNES, default_see(y), p["benchmark_bf_bof"], y, EU_PRICE) / 1000
+    for y in years
+]
+verified_costs = [
+    shipment_cost(TONNES, p["verified_see_scrap_eaf"], p["benchmark_scrap_eaf"], y, EU_PRICE) / 1000
+    for y in years
+]
 
 plt.figure(figsize=(9, 5))
-plt.plot(years, default_costs, marker="o", label="Default emissions (10.7 tCO2/t)")
-plt.plot(years, verified_costs, marker="o", label="Verified emissions (0.5 tCO2/t)")
-plt.title("Illustrative CBAM cost of 1,000 t of steel exported to the EU")
+plt.plot(years, default_costs, marker="o", label="EU default emissions (with mark-up)")
+plt.plot(years, verified_costs, marker="o", label="Verified scrap-based EAF (illustrative)")
+plt.title("Illustrative CBAM cost of 1,000 t of coated steel (CN 7210) from Indonesia")
 plt.xlabel("Year")
 plt.ylabel("Cost (EUR thousands)")
+plt.ylim(bottom=0)
 plt.legend()
 plt.grid(alpha=0.3)
-plt.figtext(0.01, 0.01, "Illustrative inputs. EU price fixed at EUR 82/tCO2. Simplified formula.", fontsize=8)
+plt.figtext(
+    0.01, 0.01,
+    "Defaults: IR 2025/2621 via IISD (2026). Verified value is an IISD example, not an Indonesian mill. EU price fixed at EUR 82/tCO2.",
+    fontsize=7,
+)
 plt.tight_layout()
 plt.savefig("charts/cost_by_year.png", dpi=150)
 print("Saved charts/cost_by_year.png")
