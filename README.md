@@ -29,3 +29,13 @@ All inputs live in data/products.csv and data/routes.csv with a source for each 
 Finding: for primary aluminium the default is close to what a real smelter emits, because only direct emissions are priced, so verified data saves far less than for steel. Scrap-based producers gain the most.
 
 ![Illustrative CBAM cost, aluminium](charts/cost_by_year_aluminium_7601.png)
+
+## Important caveats
+
+- Coated steel (CN 7210) is a "complex good": verified figures also need verified data from the mills that supplied the steel it is made from, otherwise defaults apply for those inputs (IISD 2026). The verified lines are therefore a best case.
+- The Indonesia default for steel (8.25 tCO2/t) is the highest among the countries IISD compares, which makes the default-versus-verified gap especially large.
+- The EU price is held fixed in the charts. Forecasts for 2034 are EUR 150-200/tCO2 (IISD 2026), which would scale every line up.
+
+## Carbon price deduction scenario
+
+The app has a what-if slider for a carbon price paid in Indonesia. Deduction per tonne = price paid x embedded emissions, and the EU bill cannot go below zero (simplified from IISD 2026, Equation 1). The EU rules are still in draft, and Indonesia's ETS and carbon tax do not currently cover steel or aluminium, so the realistic setting today is zero. Exporters on default emissions can only claim a deduction through a Commission default carbon price, which does not exist yet for Indonesia.

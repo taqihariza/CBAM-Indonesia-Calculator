@@ -80,3 +80,19 @@ def cost_per_tonne(see, benchmark, share, eu_price, cscf=1.0):
 def shipment_cost(tonnes, see, benchmark, year, eu_price):
     """Total CBAM cost in EUR for a shipment in a given year."""
     return tonnes * cost_per_tonne(see, benchmark, free_allocation_share(year), eu_price)
+
+
+def cost_per_tonne_with_deduction(see, benchmark, share, eu_price, carbon_price_paid=0.0, cscf=1.0):
+    """CBAM cost per tonne after deducting a carbon price effectively paid in the origin country.
+
+    Deduction = carbon_price_paid x see (EUR per tonne of product), and the bill cannot go below zero.
+    Simplified from IISD (2026) Equation 1. The EU rules for this are still in draft.
+    """
+    gross = cost_per_tonne(see, benchmark, share, eu_price, cscf)
+    return max(gross - carbon_price_paid * see, 0.0)
+
+
+def shipment_cost_with_deduction(tonnes, see, benchmark, year, eu_price, carbon_price_paid=0.0):
+    """Total CBAM cost in EUR for a shipment, after any carbon price deduction."""
+    share = free_allocation_share(year)
+    return tonnes * cost_per_tonne_with_deduction(see, benchmark, share, eu_price, carbon_price_paid)

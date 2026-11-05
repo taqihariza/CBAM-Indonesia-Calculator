@@ -10,7 +10,7 @@ from calculator import (
     get_routes,
     load_products,
     load_schedule,
-    shipment_cost,
+    shipment_cost_with_deduction,
 )
 
 st.set_page_config(page_title="CBAM Indonesia Calculator")
@@ -43,26 +43,64 @@ verified_see = st.sidebar.number_input(
 )
 eu_price = st.sidebar.slider("EU carbon price (EUR per tCO2)", 30, 200, 82)
 
+st.sidebar.header("What-if: carbon price paid in Indonesia")
+paid = st.sidebar.slider(
+    "Effective carbon price paid in Indonesia (EUR per tCO2)",
+    0, 100, 0,
+    help="Net of free allocation and rebates. Today Indonesia's ETS and carbon tax do not cover steel or aluminium, so the realistic setting is 0.",
+)
+apply_default = st.sidebar.checkbox(
+    "Also give default-emissions exporters the deduction",
+    value=False,
+    help="Default-emissions exporters can only claim a deduction through a Commission 'default carbon price'. None exists yet for Indonesia, so this assumes one is published.",
+)
+
+default_bm = default_benchmark(product_id)
+route_bm = float(route["benchmark"])
+
 rows = []
 for y in years:
-    d = shipment_cost(tonnes, default_see(product_id, y), default_benchmark(product_id), y, eu_price)
-    v = shipment_cost(tonnes, verified_see, float(route["benchmark"]), y, eu_price)
-    rows.append({"Year": y, "Default (EUR)": d, "Verified (EUR)": v, "Saving (EUR)": d - v})
+    d = shipment_cost_with_deduction(
+        tonnes, default_see(product_id, y), default_bm, y, eu_price, paid if apply_default else 0.0
+    )
+    v = shipment_cost_with_deduction(tonnes, verified_see, route_bm, y, eu_price, paid)
+    domestic = tonnes * verified_see * paid
+    rows.append(
+        {
+            "Year": y,
+            "Default: EU bill (EUR)": d,
+            "Verified: EU bill (EUR)": v,
+            "Paid in Indonesia (EUR)": domestic,
+            "Saving (EUR)": d - v,
+        }
+    )
 df = pd.DataFrame(rows)
 
 first, last = df.iloc[0], df.iloc[-1]
 c1, c2 = st.columns(2)
 c1.metric(f"Saving in {int(first['Year'])}", f"EUR {first['Saving (EUR)']:,.0f}")
 c2.metric(f"Saving in {int(last['Year'])}", f"EUR {last['Saving (EUR)']:,.0f}")
+c3, c4 = st.columns(2)
+c3.metric(f"Verified route: paid to the EU in {int(last['Year'])}", f"EUR {last['Verified: EU bill (EUR)']:,.0f}")
+c4.metric(f"Verified route: paid in Indonesia in {int(last['Year'])}", f"EUR {last['Paid in Indonesia (EUR)']:,.0f}")
 st.caption(
     f"EU default emissions for Indonesia, {product['label']}: "
     f"{default_see(product_id, 2026):.3f} tCO2/t in 2026, {default_see(product_id, 2027):.3f} in 2027, "
     f"{default_see(product_id, 2028):.3f} from 2028 (mark-up included)."
 )
+if paid > 0:
+    st.info(
+        "Each euro paid in Indonesia comes off the EU bill, so the exporter's total stays the same "
+        "until the EU bill reaches zero. The money simply goes to Indonesia instead of the EU. "
+        "The EU rules for this deduction are still in draft."
+    )
 
 fig, ax = plt.subplots(figsize=(8, 4.5))
-ax.plot(df["Year"], df["Default (EUR)"] / 1000, marker="o", label="EU default emissions")
-ax.plot(df["Year"], df["Verified (EUR)"] / 1000, marker="o", label="Verified emissions")
+ax.plot(df["Year"], df["Default: EU bill (EUR)"] / 1000, marker="o", label="Default: EU bill")
+ax.plot(df["Year"], df["Verified: EU bill (EUR)"] / 1000, marker="o", label="Verified: EU bill")
+if paid > 0:
+    total = (df["Verified: EU bill (EUR)"] + df["Paid in Indonesia (EUR)"]) / 1000
+    ax.plot(df["Year"], total, linestyle="--", marker="o", label="Verified: EU bill + paid in Indonesia")
 ax.set_xlabel("Year")
 ax.set_ylabel("Cost (EUR thousands)")
 ax.set_ylim(bottom=0)
@@ -71,12 +109,8 @@ ax.legend()
 st.pyplot(fig)
 
 st.subheader("Year by year")
-st.dataframe(
-    df.style.format(
-        {"Default (EUR)": "{:,.0f}", "Verified (EUR)": "{:,.0f}", "Saving (EUR)": "{:,.0f}"}
-    ),
-    hide_index=True,
-)
+money = {c: "{:,.0f}" for c in df.columns if c != "Year"}
+st.dataframe(df.style.format(money), hide_index=True)
 
 st.subheader("Sources for these inputs")
 st.caption(f"Product: {product['source']}")
