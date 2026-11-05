@@ -1,0 +1,5 @@
+product_id,route,benchmark,example_see,source
+steel_7210,Scrap-based EAF,0.1118,0.62,Benchmark implied by IISD 2026 Table 2 (verify) - example value is an IISD Vietnam illustration
+steel_7210,Blast furnace (BF-BOF),1.491,2.0,Benchmark: IISD 2026 - example value is a generic figure from CBAMGuide (not an Indonesian mill)
+aluminium_7601,Primary smelter,1.423,1.65,Benchmark: Argus and Reuters - example value is the EU average from the Hasanbeigi/ORF 2025 dataset via GreenSutra (not Indonesian)
+aluminium_7601,Scrap-based (secondary),0.091,0.10,Benchmark: Argus - example value is a generic range of 0.05-0.1 from CBAMGuide (not Indonesian)

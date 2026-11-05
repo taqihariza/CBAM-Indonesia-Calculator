@@ -10,10 +10,14 @@ def load_schedule():
     return pd.read_csv(DATA_DIR / "schedule.csv").set_index("year")
 
 
-def load_parameters():
-    """Sourced inputs (default emissions, benchmarks) from data/parameters.csv."""
-    df = pd.read_csv(DATA_DIR / "parameters.csv")
-    return {k: float(v) for k, v in zip(df["parameter"], df["value"])}
+def load_products():
+    """One row per product: Indonesia default, default benchmark, source."""
+    return pd.read_csv(DATA_DIR / "products.csv").set_index("product_id")
+
+
+def load_routes():
+    """One row per verified production route: benchmark and example emissions."""
+    return pd.read_csv(DATA_DIR / "routes.csv")
 
 
 def _row(year):
@@ -30,10 +34,34 @@ def free_allocation_share(year):
     return float(_row(year)["free_allocation_share"])
 
 
-def default_see(year):
-    """EU default emissions for Indonesian CN 7210 steel, including the mark-up."""
-    base = load_parameters()["indonesia_default_base"]
+def get_product(product_id):
+    products = load_products()
+    if product_id not in products.index:
+        raise ValueError(f"Unknown product {product_id}. Available: {list(products.index)}")
+    return products.loc[product_id]
+
+
+def default_see(product_id, year):
+    """EU default emissions for Indonesia, including the mark-up for that year."""
+    base = float(get_product(product_id)["default_base"])
     return base * (1 + float(_row(year)["default_markup"]))
+
+
+def default_benchmark(product_id):
+    return float(get_product(product_id)["default_benchmark"])
+
+
+def get_routes(product_id):
+    routes = load_routes()
+    return routes[routes["product_id"] == product_id].reset_index(drop=True)
+
+
+def get_route(product_id, route_name):
+    routes = get_routes(product_id)
+    match = routes[routes["route"] == route_name]
+    if match.empty:
+        raise ValueError(f"Unknown route {route_name} for {product_id}")
+    return match.iloc[0]
 
 
 def cost_per_tonne(see, benchmark, share, eu_price, cscf=1.0):

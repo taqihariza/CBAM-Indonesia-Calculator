@@ -1,0 +1,3 @@
+product_id,label,cn_code,default_base,default_benchmark,source
+steel_7210,Coated flat steel (CN 7210),7210,8.25,1.491,IISD 2026 Table 5 and section 4.3 (from IR 2025/2621 and 2025/2620)
+aluminium_7601,Unwrought aluminium (CN 7601),7601,1.70,1.423,Default: CBAMGuide citing corrected IR 2025/2621 Annex I - verify. Benchmark: Argus and Reuters 2025 (primary aluminium)
